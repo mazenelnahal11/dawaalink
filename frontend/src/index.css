@@ -1,0 +1,115 @@
+@import "tailwindcss";
+
+
+@theme {
+  /* Core brand */
+  --color-primary:           #5421AC;
+  --color-primary-container: #6C3FC5;
+  --color-on-primary:        #FFFFFF;
+  --color-primary-fixed:     #EADDFF;
+  --color-on-primary-fixed:  #24005B;
+  --color-on-primary-fixed-variant: #5623AE;
+  --color-primary-fixed-dim: #D2BCFF;
+  --color-inverse-primary:   #D2BCFF;
+
+  /* Surfaces */
+  --color-surface:                   #FCFBFF;
+  --color-surface-bright:            #FCFBFF;
+  --color-surface-dim:               #DAD7F3;
+  --color-surface-container-lowest:  #FFFFFF;
+  --color-surface-container-low:     #F5F2FF;
+  --color-surface-container:         #EFECFF;
+  --color-surface-container-high:    #E8E5FF;
+  --color-surface-container-highest: #E2E0FC;
+  --color-surface-variant:           #E2E0FC;
+  --color-inverse-surface:           #2F2E43;
+  --color-inverse-on-surface:        #F2EFFF;
+
+  /* On-surface text */
+  --color-on-surface:         #1A1A2E;
+  --color-on-surface-variant: #4A4453;
+  --color-on-background:      #1A1A2E;
+  --color-background:         #FCFBFF;
+
+  /* Secondary */
+  --color-secondary:           #605D69;
+  --color-secondary-container: #E6E0EF;
+  --color-secondary-fixed:     #E6E0EF;
+  --color-secondary-fixed-dim: #C9C4D3;
+  --color-on-secondary:        #FFFFFF;
+  --color-on-secondary-container: #66636F;
+  --color-on-secondary-fixed:  #1C1A25;
+  --color-on-secondary-fixed-variant: #484551;
+
+  /* Tertiary (amber/warm) */
+  --color-tertiary:           #683900;
+  --color-tertiary-container: #8A4D00;
+  --color-tertiary-fixed:     #FFDCC0;
+  --color-tertiary-fixed-dim: #FFB876;
+  --color-on-tertiary:        #FFFFFF;
+  --color-on-tertiary-container: #FFCB9F;
+  --color-on-tertiary-fixed:  #2D1600;
+  --color-on-tertiary-fixed-variant: #6B3B00;
+
+  /* Outline */
+  --color-outline:         #7B7485;
+  --color-outline-variant: #CCC3D5;
+
+  /* Error */
+  --color-error:           #BA1A1A;
+  --color-error-container: #FFDAD6;
+  --color-on-error:        #FFFFFF;
+  --color-on-error-container: #93000A;
+
+  /* Surface tint */
+  --color-surface-tint: #6E41C7;
+
+  /* Fonts */
+  --font-headline: "Manrope", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+  
+  /* Shadows */
+  --shadow-card: 0 1px 3px rgba(26, 26, 46, 0.06), 0 1px 2px rgba(26, 26, 46, 0.04);
+  --shadow-card-hover: 0 4px 16px rgba(84, 33, 172, 0.10), 0 2px 6px rgba(26, 26, 46, 0.06);
+  --shadow-primary: 0 4px 14px rgba(84, 33, 172, 0.30);
+  --shadow-primary-sm: 0 2px 8px rgba(84, 33, 172, 0.20);
+}
+
+@layer base {
+  body {
+    @apply bg-surface text-on-surface font-body selection:bg-primary-fixed selection:text-on-primary-fixed;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+.ghost-shadow {
+  box-shadow: 0px 12px 32px rgba(26, 26, 46, 0.06);
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.7s ease-out both;
+}
+
+.animate-fade-in-delayed {
+  animation: fadeInUp 0.7s ease-out 0.2s both;
+}

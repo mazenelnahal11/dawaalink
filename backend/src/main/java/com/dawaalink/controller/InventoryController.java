@@ -39,6 +39,13 @@ public class InventoryController {
         return ResponseEntity.ok(inventoryService.getPharmacyInventory(pharmacyId));
     }
 
+    @GetMapping("/near-expiry")
+    @PreAuthorize("hasAnyRole('OWNER', 'PHARMACIST', 'EMPLOYEE')")
+    public ResponseEntity<List<InventoryItemResponse>> getNearExpiry(@RequestParam(defaultValue = "90") int threshold) {
+        UUID pharmacyId = securityContext.getCurrentPharmacyId();
+        return ResponseEntity.ok(inventoryService.getNearExpiryItems(pharmacyId, threshold));
+    }
+
     @PatchMapping("/{id}")
     @PreAuthorize("hasAnyRole('OWNER', 'PHARMACIST')")
     public ResponseEntity<InventoryItemResponse> updateListing(@PathVariable UUID id,

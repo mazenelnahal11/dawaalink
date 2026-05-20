@@ -1,16 +1,18 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { loginUser } from '../../api/auth';
 import { useAuthStore } from '../../store/AuthStore';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const login = useAuthStore((s) => s.login);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [successMsg] = useState<string | null>(location.state?.message || null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,16 +24,24 @@ export default function LoginPage() {
         {
           id: res.pharmacyId,
           pharmacyId: res.pharmacyId,
-          pharmacyStatus: res.status as 'PENDING' | 'ACTIVE' | 'FLAGGED',
+          pharmacyStatus: res.status as 'PENDING' | 'ACTIVE' | 'SUSPENDED',
           name: email.split('@')[0],
           email,
           role: res.role as 'OWNER' | 'PHARMACIST' | 'EMPLOYEE' | 'ADMIN',
+          pharmacyName: res.pharmacyName,
+          district: res.district,
+          profileImageUrl: res.profileImageUrl,
         },
         res.token,
       );
       navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Invalid email or password. Please try again.');
+      const msg = err?.response?.data?.message || 'Invalid email or password. Please try again.';
+      setError(msg);
+      if (msg.includes('verify your email address')) {
+        // Automatically redirect to verification page after 1.5s
+        setTimeout(() => navigate(`/verify?email=${encodeURIComponent(email)}`), 1500);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,10 +65,27 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="bg-surface-container-lowest p-8 rounded-2xl shadow-card border border-outline-variant/15 space-y-5">
+          {successMsg && (
+             <div className="bg-green-50 text-green-700 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 border border-green-200">
+               <span className="material-symbols-outlined text-[18px]">check_circle</span>
+               {successMsg}
+             </div>
+          )}
           {error && (
-            <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2">
-              <span className="material-symbols-outlined text-error text-[18px]">error</span>
-              {error}
+            <div className="bg-error-container text-on-error-container px-4 py-3 rounded-xl text-sm font-semibold flex items-start gap-2 flex-col">
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-error text-[18px]">error</span>
+                {error}
+              </div>
+              {error.includes('verify your email address') && (
+                <button 
+                  type="button" 
+                  onClick={() => navigate(`/verify?email=${encodeURIComponent(email)}`)}
+                  className="mt-2 text-primary font-bold underline text-xs"
+                >
+                  Verify Now
+                </button>
+              )}
             </div>
           )}
 

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuthStore, logout } from '../../store/AuthStore';
+import { Link } from 'react-router-dom';
 
 export const TopHeader: React.FC = () => {
   const { user } = useAuthStore();
@@ -59,24 +60,44 @@ export const TopHeader: React.FC = () => {
 
         <div className="flex items-center gap-3 relative">
           <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-on-surface leading-none font-headline">{user?.pharmacyName || 'Pharmacy Name'}</p>
-            <p className="text-xs text-on-surface-variant font-body">{user?.district || 'District'}</p>
+            <p className="text-sm font-bold text-on-surface leading-none font-headline">{user?.pharmacyName || 'DawaaLink Partner'}</p>
+            <p className="text-[10px] text-on-surface-variant font-body uppercase tracking-wider font-bold mt-1">{user?.district || 'Location Unset'}</p>
           </div>
           
-          <button onClick={() => setShowProfileDrop(!showProfileDrop)} className="rounded-full focus:outline-none">
-            <img 
-              alt="Pharmacy manager profile picture" 
-              className="w-10 h-10 rounded-full border-2 border-primary-fixed/40 object-cover" 
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrCR-5ck0arRNFMuKfYZGW69dWzjJh5NLKl6wg1YEK7GwwCWR1_VPhdzChAH6zsWt2yjuV2rYq3B_QhkMERDgUCLdRyX0wMiTxc_1ocVnaC06Hs85EgoMGxz-YkAdOZzlmX-8xtEsvxnMfjRqWcsSZjPm1qoYjch3dpO6CqVfl7_drArb3aRfMIZ-LM9tG1LvRFokoe-hIt0q7TK_CkpIv4z5Dqom8NEuoLDDzUXVBRbq3omEjGW87_4-By9ZDzdTDTP5Ji6qYGwpN"
-            />
+          <button onClick={() => setShowProfileDrop(!showProfileDrop)} className="group rounded-full focus:outline-none relative">
+            {user?.profileImageUrl ? (
+              <img 
+                alt="Pharmacy profile" 
+                className="w-10 h-10 rounded-full border-2 border-primary-fixed/40 object-cover group-hover:border-primary transition-all shadow-sm" 
+                src={user.profileImageUrl}
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full bg-primary-fixed text-primary flex items-center justify-center border-2 border-primary-fixed/40 group-hover:border-primary transition-all">
+                <span className="material-symbols-outlined text-xl" data-icon="store">store</span>
+              </div>
+            )}
           </button>
 
           {showProfileDrop && (
-            <div className="absolute top-12 right-0 w-48 bg-surface-container-lowest shadow-card-hover rounded-2xl border border-outline-variant/30 flex flex-col py-2">
+            <div className="absolute top-12 right-0 w-56 bg-surface-container-lowest shadow-card-hover rounded-2xl border border-outline-variant/30 flex flex-col py-2 animate-in fade-in zoom-in-95 duration-200">
+              <div className="px-4 py-2 border-b border-surface-container mb-2">
+                <p className="text-xs font-bold text-outline uppercase font-label">Account</p>
+                <p className="text-sm font-bold truncate">{user?.email}</p>
+              </div>
+              <Link 
+                to="/profile" 
+                onClick={() => setShowProfileDrop(false)}
+                className="flex items-center gap-2 px-4 py-2 hover:bg-surface-container-low text-on-surface text-sm font-bold font-body"
+              >
+                <span className="material-symbols-outlined text-sm" data-icon="person">person</span>
+                Pharmacy Profile
+              </Link>
+              <div className="h-px bg-surface-container mx-2 my-1"></div>
               <button 
                 onClick={logout}
-                className="w-full text-left px-4 py-2 hover:bg-surface-container-low text-error font-bold font-body"
+                className="flex items-center gap-2 w-full text-left px-4 py-2 hover:bg-error-container text-error text-sm font-bold font-body transition-colors"
               >
+                <span className="material-symbols-outlined text-sm" data-icon="logout">logout</span>
                 Sign Out
               </button>
             </div>

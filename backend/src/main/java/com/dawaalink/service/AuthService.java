@@ -31,17 +31,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
+    private final EmailService emailService;
 
     public AuthService(PharmacyRepository pharmacyRepository,
                        PharmacyUserRepository userRepository,
                        PasswordEncoder passwordEncoder,
                        AuthenticationManager authenticationManager,
-                       JwtUtil jwtUtil) {
+                       JwtUtil jwtUtil,
+                       EmailService emailService) {
         this.pharmacyRepository = pharmacyRepository;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtUtil = jwtUtil;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -49,7 +52,7 @@ public class AuthService {
         if (pharmacyRepository.findByTaxId(request.getCommercialRegNo()).isPresent()) {
             throw new BusinessRuleException("Pharmacy with this commercial registration already exists");
         }
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
+        if (userRepository.findByEmailIgnoreCase(request.getEmail()).isPresent()) {
             throw new BusinessRuleException("Email already in use");
         }
 
@@ -67,7 +70,14 @@ public class AuthService {
         owner.setEmail(request.getEmail());
         owner.setPasswordHash(passwordEncoder.encode(request.getPassword()));
         owner.setRole(Role.OWNER);
+        
+        String verificationCode = String.format("%06d", new java.util.Random().nextInt(999999));
+        owner.setVerificationCode(verificationCode);
+        owner.setVerified(false);
+        
         userRepository.save(owner);
+
+        emailService.sendVerificationEmail(owner.getEmail(), verificationCode);
 
         return Map.of("pharmacyId", pharmacy.getId());
     }
@@ -77,8 +87,12 @@ public class AuthService {
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        PharmacyUser user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        PharmacyUser user = userRepository.findByEmailIgnoreCase(request.getEmail())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
+
+        if (!user.isVerified()) {
+            throw new BusinessRuleException("Please verify your email address before logging in.");
+        }
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
         Map<String, Object> claims = new HashMap<>();
@@ -91,7 +105,10 @@ public class AuthService {
                 token,
                 user.getRole().name(),
                 user.getPharmacy().getId(),
-                user.getPharmacy().getStatus().name()
+                user.getPharmacy().getStatus().name(),
+                user.getPharmacy().getCommercialName(),
+                user.getPharmacy().getDistrict(),
+                user.getPharmacy().getProfileImageUrl()
         );
     }
 
@@ -102,5 +119,23 @@ public class AuthService {
         pharmacy.setStatus(PharmacyStatus.ACTIVE);
         pharmacyRepository.save(pharmacy);
         return Map.of("status", "ACTIVE");
+    }
+
+    @Transactional
+    public void verifyAccount(String email, String code) {
+        PharmacyUser user = userRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
+
+        if (user.isVerified()) {
+            throw new BusinessRuleException("Account is already verified");
+        }
+
+        if (!code.equals(user.getVerificationCode())) {
+            throw new BusinessRuleException("Invalid verification code");
+        }
+
+        user.setVerified(true);
+        user.setVerificationCode(null);
+        userRepository.save(user);
     }
 }

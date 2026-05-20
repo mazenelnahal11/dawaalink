@@ -8,6 +8,8 @@ export type SwapStatus =
   | 'COMPLETED'
   | 'CANCELLED'
   | 'TIMED_OUT'
+  | 'SUSPENDED'
+  | 'ACTIVE'
   | 'FLAGGED';
 
 type Props = { status: SwapStatus };
@@ -20,6 +22,8 @@ const STATUS_MAP: Record<SwapStatus, string> = {
   COMPLETED:       "bg-green-100 text-green-700",
   CANCELLED:       "bg-error-container text-error",
   TIMED_OUT:       "bg-surface-container-highest text-on-surface-variant",
+  SUSPENDED:       "bg-error-container text-on-error-container",
+  ACTIVE:          "bg-green-100 text-green-700",
   FLAGGED:         "bg-error-container text-on-error-container",
 };
 

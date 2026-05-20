@@ -3,6 +3,7 @@ package com.dawaalink.model;
 import com.dawaalink.model.enums.LegStatus;
 import jakarta.persistence.*;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "swap_leg")
@@ -12,6 +13,7 @@ public class SwapLeg {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "cycle_id", nullable = false)
     private SwapCycle cycle;

@@ -11,6 +11,8 @@ import java.time.LocalDate;
 
 public class CreateInventoryItemRequest {
 
+    private String gtin;
+
     @NotBlank
     private String medicineName;
 
@@ -36,6 +38,9 @@ public class CreateInventoryItemRequest {
     private String notes;
 
     public CreateInventoryItemRequest() {}
+
+    public String getGtin() { return gtin; }
+    public void setGtin(String gtin) { this.gtin = gtin; }
 
     public String getMedicineName() {
         return medicineName;

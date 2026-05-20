@@ -1,11 +1,13 @@
 import React from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getDashboardKPI, getNearExpiry, getActiveMatches, getRecentHistory } from '../../api/dashboard';
-import { Link } from 'react-router-dom';
+import { getDashboardKPI, getNearExpiry, getActiveMatches, getRecentHistory, exportInventoryReport } from '../../api/dashboard';
+import { Link, useNavigate } from 'react-router-dom';
 import { UrgencyBadge } from '../../components/UrgencyBadge';
 import { StatusChip } from '../../components/StatusChip';
+import { WishlistSection } from './WishlistSection';
 
 export const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const { data: kpi, isLoading: loadingKpi } = useQuery({ queryKey: ['dashboardKPI'], queryFn: getDashboardKPI });
   const { data: nearExpiry } = useQuery({ queryKey: ['nearExpiry'], queryFn: () => getNearExpiry(90) });
   const { data: activeMatches } = useQuery({ queryKey: ['activeMatches'], queryFn: getActiveMatches });
@@ -24,10 +26,16 @@ export const DashboardPage: React.FC = () => {
           <p className="text-on-surface-variant mt-1 font-body">Real-time overview of your clinical barter ecosystem.</p>
         </div>
         <div className="flex gap-3">
-          <button className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors">
+          <button 
+            onClick={() => exportInventoryReport('pdf')}
+            className="px-5 py-2.5 rounded-xl border border-outline-variant text-on-surface font-semibold text-sm hover:bg-surface-container-low transition-colors"
+          >
             Export Report
           </button>
-          <button className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm shadow-primary-sm hover:shadow-primary active:scale-95 transition-all">
+          <button 
+            onClick={() => navigate('/inventory/new')}
+            className="px-5 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm shadow-primary-sm hover:shadow-primary active:scale-95 transition-all"
+          >
             Add Dead Stock Item
           </button>
         </div>
@@ -93,7 +101,7 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="bg-surface-container-lowest rounded-2xl overflow-hidden shadow-card border border-surface-container">
             <div className="grid grid-cols-1 divide-y divide-surface-container-low">
-              {nearExpiry && nearExpiry.length > 0 ? (
+              {Array.isArray(nearExpiry) && nearExpiry.length > 0 ? (
                 nearExpiry.sort((a, b) => a.daysToExpiry - b.daysToExpiry).map((item) => (
                   <div key={item.id} className="p-4 flex items-center justify-between hover:bg-surface-container-low transition-colors group">
                     <div className="flex items-center gap-4">
@@ -126,47 +134,52 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
         </div>
-
-        {/* Active Matches */}
-        <div className="space-y-4">
-          <h3 className="text-xl font-headline font-bold flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary" data-icon="handshake">handshake</span>
-            Active Matches
-          </h3>
+        {/* Right Column: Matches & Wishlist */}
+        <div className="space-y-8">
+          {/* Active Matches */}
           <div className="space-y-4">
-            {activeMatches && activeMatches.length > 0 ? (
-              activeMatches.map((match) => (
-                <div key={match.cycleId} className="bg-surface-container-lowest p-5 rounded-2xl shadow-card border border-surface-container relative overflow-hidden group hover:shadow-card-hover transition-shadow">
-                  <div className="flex justify-between items-start mb-3">
-                    <div>
-                      <p className="text-[10px] font-label font-bold text-primary uppercase mb-1">{match.direction === 'RECEIVED' ? 'INCOMING MATCH' : 'OUTGOING MATCH'}</p>
-                      <h4 className="font-bold text-on-surface font-headline leading-tight">{match.medicineName}</h4>
+            <h3 className="text-xl font-headline font-bold flex items-center gap-2">
+              <span className="material-symbols-outlined text-primary" data-icon="handshake">handshake</span>
+              Active Matches
+            </h3>
+            <div className="space-y-4">
+              {Array.isArray(activeMatches) && activeMatches.length > 0 ? (
+                activeMatches.map((match) => (
+                  <div key={match.cycleId} className="bg-surface-container-lowest p-5 rounded-2xl shadow-card border border-surface-container relative overflow-hidden group hover:shadow-card-hover transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="text-[10px] font-label font-bold text-primary uppercase mb-1">{match.direction === 'RECEIVED' ? 'INCOMING MATCH' : 'OUTGOING MATCH'}</p>
+                        <h4 className="font-bold text-on-surface font-headline leading-tight">{match.medicineName}</h4>
+                      </div>
+                      <span className="material-symbols-outlined text-primary" data-icon="sync_alt">sync_alt</span>
                     </div>
-                    <span className="material-symbols-outlined text-primary" data-icon="sync_alt">sync_alt</span>
-                  </div>
-                  <div className="space-y-2 mb-4 font-body">
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Partner:</span>
-                      <span className="font-bold text-on-surface">{match.partnerPharmacyName}</span>
+                    <div className="space-y-2 mb-4 font-body">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Partner:</span>
+                        <span className="font-bold text-on-surface">{match.partnerPharmacyName}</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-on-surface-variant">Quantity:</span>
+                        <span className="font-bold text-on-surface">{match.quantity} Units</span>
+                      </div>
                     </div>
-                    <div className="flex justify-between text-xs">
-                      <span className="text-on-surface-variant">Quantity:</span>
-                      <span className="font-bold text-on-surface">{match.quantity} Units</span>
+                    <div className="grid grid-cols-2 gap-2 pt-2 border-t border-surface-container-low mt-2">
+                      <button className="py-2 rounded-lg bg-surface-container text-on-surface-variant text-xs font-bold hover:bg-error-container hover:text-error transition-colors">Decline</button>
+                      <button className="py-2 rounded-lg bg-primary text-on-primary text-xs font-bold shadow-primary-sm hover:shadow-primary transition-all active:scale-95">Accept Swap</button>
                     </div>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 pt-2 border-t border-surface-container-low mt-2">
-                    <button className="py-2 rounded-lg bg-surface-container text-on-surface-variant text-xs font-bold hover:bg-error-container hover:text-error transition-colors">Decline</button>
-                    <button className="py-2 rounded-lg bg-primary text-on-primary text-xs font-bold shadow-primary-sm hover:shadow-primary transition-all active:scale-95">Accept Swap</button>
-                  </div>
+                ))
+              ) : (
+                <div className="p-8 text-center bg-surface-container-lowest rounded-2xl border border-surface-container text-on-surface-variant">
+                  <span className="material-symbols-outlined text-4xl text-primary mb-2 opacity-50" data-icon="handshake">handshake</span>
+                  <p className="text-sm">No active matches right now. New matches appear here automatically.</p>
                 </div>
-              ))
-            ) : (
-              <div className="p-8 text-center bg-surface-container-lowest rounded-2xl border border-surface-container text-on-surface-variant">
-                <span className="material-symbols-outlined text-4xl text-primary mb-2 opacity-50" data-icon="handshake">handshake</span>
-                <p className="text-sm">No active matches right now. New matches appear here automatically.</p>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          {/* Wishlist Section */}
+          <WishlistSection />
         </div>
       </div>
 
@@ -191,7 +204,7 @@ export const DashboardPage: React.FC = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-surface-container-low text-sm">
-              {recentHistory && recentHistory.length > 0 ? (
+              {Array.isArray(recentHistory) && recentHistory.length > 0 ? (
                 recentHistory.map((swap) => (
                   <tr key={swap.cycleId} className="hover:bg-surface-container-lowest transition-colors">
                     <td className="px-6 py-4 font-medium">{new Date(swap.createdAt).toLocaleDateString()}</td>

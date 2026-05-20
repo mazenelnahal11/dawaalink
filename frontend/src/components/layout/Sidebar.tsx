@@ -66,6 +66,7 @@ export const Sidebar: React.FC = () => {
               <p className="text-[10px] font-bold text-outline uppercase tracking-tighter font-label">System Admin</p>
             </div>
             {renderNavItem('/admin/flags', 'flag', 'Flagged Items')}
+            {renderNavItem('/admin/approvals', 'verified_user', 'Pharmacy Approvals')}
             {renderNavItem('/admin/audit', 'manage_search', 'Audit Log')}
           </>
         )}

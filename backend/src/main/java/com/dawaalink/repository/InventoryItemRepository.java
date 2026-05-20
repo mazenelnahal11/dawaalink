@@ -17,7 +17,8 @@ import java.util.UUID;
 public interface InventoryItemRepository extends JpaRepository<InventoryItem, UUID>, JpaSpecificationExecutor<InventoryItem> {
 
     List<InventoryItem> findByPharmacyId(UUID pharmacyId);
-
+    List<InventoryItem> findByPharmacyIdAndExpiryDateBefore(UUID pharmacyId, LocalDate date);
+    long countByPharmacyId(UUID pharmacyId);
     List<InventoryItem> findByExpiryDateBefore(LocalDate date);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

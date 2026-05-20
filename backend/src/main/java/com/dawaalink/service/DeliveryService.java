@@ -28,17 +28,20 @@ public class DeliveryService {
     private final InventoryItemRepository inventoryRepository;
     private final AuditService auditService;
     private final PasswordEncoder passwordEncoder;
+    private final EmailService emailService;
 
     public DeliveryService(SwapLegRepository swapLegRepository,
                            SwapCycleRepository swapCycleRepository,
                            InventoryItemRepository inventoryRepository,
                            AuditService auditService,
-                           PasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder,
+                           EmailService emailService) {
         this.swapLegRepository = swapLegRepository;
         this.swapCycleRepository = swapCycleRepository;
         this.inventoryRepository = inventoryRepository;
         this.auditService = auditService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -70,6 +73,8 @@ public class DeliveryService {
         
         swapLegRepository.save(leg);
         swapCycleRepository.save(leg.getCycle());
+
+        emailService.sendSwapUpdate("admin@dawaa-link.com", "A swap leg (ID: " + leg.getId() + ") has been dispatched for delivery.");
 
         // Return plaintext PIN to the sender ONCE — it cannot be retrieved again
         return plaintextPin;

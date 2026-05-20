@@ -6,5 +6,5 @@ import java.util.UUID;
 import java.util.Optional;
 
 public interface PharmacyUserRepository extends JpaRepository<PharmacyUser, UUID> {
-    Optional<PharmacyUser> findByEmail(String email);
+    Optional<PharmacyUser> findByEmailIgnoreCase(String email);
 }

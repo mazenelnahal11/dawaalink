@@ -50,6 +50,7 @@ public class MatchingEngineService {
      * turning the O(n*m) nested loop into O(n+m) amortized.
      */
     @Scheduled(cron = "0 0/30 * * * *")
+    @Transactional
     public void runMatchingCycle() {
         // Use @EntityGraph query to eager-load pharmacy + medication in one query (no N+1)
         List<InventoryItem> activeInventory = inventoryRepository.findByLockStatusWithRelations(LockStatus.ACTIVE);
@@ -61,6 +62,7 @@ public class MatchingEngineService {
         // Index wishlists by GTIN for O(1) lookup instead of O(m) inner loop
         Map<String, List<WishlistItem>> wishlistByGtin = new HashMap<>();
         for (WishlistItem w : activeWishlists) {
+            if (w.getMedication() == null) continue;
             String gtin = w.getMedication().getGtin();
             if (gtin != null) {
                 wishlistByGtin.computeIfAbsent(gtin, k -> new ArrayList<>()).add(w);
@@ -71,6 +73,7 @@ public class MatchingEngineService {
         List<SwapEdge> edges = new ArrayList<>();
 
         for (InventoryItem item : activeInventory) {
+            if (item.getMedication() == null) continue;
             String gtin = item.getMedication().getGtin();
             if (gtin == null) continue;
 

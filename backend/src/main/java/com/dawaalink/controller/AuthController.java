@@ -3,6 +3,7 @@ package com.dawaalink.controller;
 import com.dawaalink.dto.AuthResponse;
 import com.dawaalink.dto.LoginRequest;
 import com.dawaalink.dto.RegisterRequest;
+import com.dawaalink.dto.VerifyRequest;
 import com.dawaalink.security.SecurityContextUtil;
 import com.dawaalink.service.AuthService;
 import jakarta.validation.Valid;
@@ -35,6 +36,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
         return ResponseEntity.ok(authService.login(request));
+    }
+
+    @PostMapping("/verify")
+    public ResponseEntity<Map<String, String>> verify(@Valid @RequestBody VerifyRequest request) {
+        authService.verifyAccount(request.getEmail(), request.getCode());
+        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
     }
 
     /**

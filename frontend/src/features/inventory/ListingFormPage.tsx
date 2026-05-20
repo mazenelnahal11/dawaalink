@@ -8,17 +8,17 @@ import { ErrorBanner } from '../../components/ErrorBanner';
 
 // Zod Schema based on DAWAA-FE-REDESIGN-001 Section 3.3
 const listingSchema = z.object({
-  medicineId: z.string().min(1, "Please select a valid medicine from the list"),
-  medicineName: z.string().min(1),
+  medicineId: z.string().optional(),
+  medicineName: z.string().min(2, "Please enter a valid medicine name"),
   batchNumber: z.string().min(3).max(50).regex(/^[A-Za-z0-9-]+$/, "Alphanumeric and hyphens only"),
   expiryDate: z.string().refine((val) => {
     const d = new Date(val);
     return !isNaN(d.getTime()) && d > new Date();
   }, { message: "Expiry date must be in the future" }),
-  quantity: z.number().int().positive("Quantity must be greater than 0"),
+  quantityAvailable: z.number().int().positive("Quantity must be greater than 0"),
   unit: z.enum(['BOX', 'STRIP', 'VIAL', 'PIECE']),
   storageCondition: z.enum(['ROOM_TEMP', 'COLD_CHAIN']),
-  unitPriceEGP: z.number().nonnegative().optional(),
+  unitPrice: z.number().nonnegative().optional(),
   notes: z.string().max(500).optional(),
 });
 
@@ -32,10 +32,10 @@ export const ListingFormPage: React.FC = () => {
     medicineName: '',
     batchNumber: '',
     expiryDate: '',
-    quantity: 1,
+    quantityAvailable: 1,
     unit: 'BOX',
     storageCondition: 'ROOM_TEMP',
-    unitPriceEGP: undefined,
+    unitPrice: undefined,
     notes: ''
   });
 
@@ -71,8 +71,9 @@ export const ListingFormPage: React.FC = () => {
         navigate('/inventory', { state: { message: "Item listed successfully. The matching engine will run within 30 minutes." } });
       }
     },
-    onError: () => {
-       setFlaggedErrorMsg("An unexpected server error occurred.");
+    onError: (error: any) => {
+       const msg = error.response?.data?.message || "An unexpected server error occurred.";
+       setFlaggedErrorMsg(msg);
     }
   });
 
@@ -99,7 +100,8 @@ export const ListingFormPage: React.FC = () => {
         return; 
       }
       
-      mutation.mutate(formData);
+      const { medicineId, ...payload } = formData;
+      mutation.mutate({ ...payload, gtin: medicineId });
     } catch (err) {
       if (err instanceof z.ZodError) {
         const newErrs: any = {};
@@ -113,7 +115,8 @@ export const ListingFormPage: React.FC = () => {
 
   const handleConfirmColdChain = () => {
     setShowColdChainWarning(false);
-    mutation.mutate(formData);
+    const { medicineId, ...payload } = formData;
+    mutation.mutate({ ...payload, gtin: medicineId });
   };
 
   return (
@@ -138,8 +141,9 @@ export const ListingFormPage: React.FC = () => {
             placeholder="Search for medication (e.g., Augmentin)"
             value={searchTerm || formData.medicineName}
             onChange={(e) => {
-              setSearchTerm(e.target.value);
-              setFormData({ ...formData, medicineName: e.target.value, medicineId: '' });
+              const val = e.target.value;
+              setSearchTerm(val);
+              setFormData({ ...formData, medicineName: val, medicineId: '' });
               setShowOptions(true);
             }}
             onFocus={() => setShowOptions(true)}
@@ -202,12 +206,12 @@ export const ListingFormPage: React.FC = () => {
             <input
               type="number"
               min="1"
-              className={`w-full px-4 py-3 rounded-xl border ${errors.quantity ? 'border-error' : 'border-outline-variant/60 focus:border-primary'} font-body text-sm outline-none transition-colors`}
-              value={formData.quantity}
-              onChange={e => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-              onBlur={() => handleBlur('quantity')}
+              className={`w-full px-4 py-3 rounded-xl border ${errors.quantityAvailable ? 'border-error' : 'border-outline-variant/60 focus:border-primary'} font-body text-sm outline-none transition-colors`}
+              value={formData.quantityAvailable}
+              onChange={e => setFormData({ ...formData, quantityAvailable: parseInt(e.target.value) || 0 })}
+              onBlur={() => handleBlur('quantityAvailable')}
             />
-            {errors.quantity && <p className="text-error text-xs mt-1 font-body font-bold">{errors.quantity}</p>}
+            {errors.quantityAvailable && <p className="text-error text-xs mt-1 font-body font-bold">{errors.quantityAvailable}</p>}
           </div>
 
           {/* Unit */}
@@ -235,8 +239,8 @@ export const ListingFormPage: React.FC = () => {
                 type="number"
                 placeholder="e.g. 120.50"
                 className="w-full px-4 py-3 pr-12 rounded-xl border border-outline-variant/60 focus:border-primary font-body text-sm outline-none"
-                value={formData.unitPriceEGP || ''}
-                onChange={e => setFormData({ ...formData, unitPriceEGP: parseFloat(e.target.value) || undefined })}
+                value={formData.unitPrice || ''}
+                onChange={e => setFormData({ ...formData, unitPrice: parseFloat(e.target.value) || undefined })}
               />
               <span className="absolute right-4 top-3 text-sm font-bold text-on-surface-variant font-label">EGP</span>
             </div>

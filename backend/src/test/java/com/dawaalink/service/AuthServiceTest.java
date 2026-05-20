@@ -61,7 +61,7 @@ class AuthServiceTest {
     @Test
     void register_Success() {
         when(pharmacyRepository.findByTaxId(any())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(any())).thenReturn(Optional.empty());
+        when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.empty());
         when(passwordEncoder.encode(any())).thenReturn("hashed_password");
         
         Pharmacy mockPharmacy = new Pharmacy();
@@ -91,7 +91,7 @@ class AuthServiceTest {
     @Test
     void register_DuplicateEmail_ThrowsException() {
         when(pharmacyRepository.findByTaxId(any())).thenReturn(Optional.empty());
-        when(userRepository.findByEmail(any())).thenReturn(Optional.of(new PharmacyUser()));
+        when(userRepository.findByEmailIgnoreCase(any())).thenReturn(Optional.of(new PharmacyUser()));
 
         Exception exception = assertThrows(RuntimeException.class, () -> authService.register(registerRequest));
         assertEquals("Email already in use", exception.getMessage());

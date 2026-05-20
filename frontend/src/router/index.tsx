@@ -17,8 +17,10 @@ const ProfilePage      = lazy(() => import("../features/profile/ProfilePage"));
 const SettingsPage     = lazy(() => import("../features/settings/SettingsPage"));
 const AdminFlagsPage   = lazy(() => import("../features/admin/AdminFlagsPage"));
 const AuditLogPage     = lazy(() => import("../features/admin/AuditLogPage"));
+const PharmacyApprovalPage = lazy(() => import("../features/admin/PharmacyApprovalPage"));
 const LoginPage        = lazy(() => import("../features/auth/LoginPage"));
 const RegisterPage     = lazy(() => import("../features/auth/RegisterPage"));
+const VerifyPage       = lazy(() => import("../features/auth/VerifyPage"));
 
 const wrap = (el: ReactNode) => (
   <Suspense fallback={<PageSkeleton />}>{el}</Suspense>
@@ -26,12 +28,14 @@ const wrap = (el: ReactNode) => (
 
 const AuthRedirect = () => {
     const { user } = useAuthStore();
-    return user ? <Navigate to="/dashboard" replace /> : <LandingPage />;
+    if (!user) return <LandingPage />;
+    return <Navigate to={user.role === 'ADMIN' ? "/admin/approvals" : "/dashboard"} replace />;
 };
 
 export const router = createBrowserRouter([
   { path: "/login",    element: wrap(<LoginPage />) },
   { path: "/register", element: wrap(<RegisterPage />) },
+  { path: "/verify",   element: wrap(<VerifyPage />) },
   { path: "/", element: <AuthRedirect /> },
   {
     element: <AppShell />,
@@ -58,13 +62,14 @@ export const router = createBrowserRouter([
         children: [
           { path: "/profile",         element: wrap(<ProfilePage />) },
           { path: "/settings",        element: wrap(<SettingsPage />) },
-          { path: "/admin/audit",     element: wrap(<AuditLogPage />) },
         ],
       },
       {
         element: <PrivateRoute allowedRoles={["ADMIN"]} />,
         children: [
           { path: "/admin/flags",     element: wrap(<AdminFlagsPage />) },
+          { path: "/admin/audit",     element: wrap(<AuditLogPage />) },
+          { path: "/admin/approvals", element: wrap(<PharmacyApprovalPage />) },
         ],
       },
     ],

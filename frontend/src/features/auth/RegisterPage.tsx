@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { registerUser } from '../../api/auth';
 
 export default function RegisterPage() {
+  const navigate = useNavigate();
   const [form, setForm] = useState({
     pharmacyName: '',
     district: '',
@@ -14,7 +15,6 @@ export default function RegisterPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [success, setSuccess] = useState(false);
 
   const set = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
 
@@ -24,7 +24,7 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       await registerUser(form);
-      setSuccess(true);
+      navigate(`/verify?email=${encodeURIComponent(form.email)}`, { replace: true });
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Registration failed. Please check your details.');
     } finally {
@@ -32,27 +32,7 @@ export default function RegisterPage() {
     }
   };
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-surface flex items-center justify-center px-4">
-        <div className="w-full max-w-md text-center animate-fade-in">
-          <div className="w-20 h-20 bg-primary-fixed rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="material-symbols-outlined text-primary text-4xl">check_circle</span>
-          </div>
-          <h1 className="font-headline text-3xl font-extrabold text-on-surface tracking-tight mb-3">Registration Successful!</h1>
-          <p className="text-on-surface-variant font-body mb-8">
-            Your pharmacy account has been created. You can now sign in to start listing your dead stock.
-          </p>
-          <Link
-            to="/login"
-            className="inline-block bg-primary text-on-primary px-8 py-3.5 rounded-xl font-bold text-sm shadow-primary-sm hover:shadow-primary active:scale-95 transition-all"
-          >
-            Continue to Sign In
-          </Link>
-        </div>
-      </div>
-    );
-  }
+  // Success state removed as we now navigate directly to verification
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center px-4 py-12">

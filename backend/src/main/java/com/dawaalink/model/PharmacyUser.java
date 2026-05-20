@@ -33,6 +33,12 @@ public class PharmacyUser {
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Column(name = "verification_code", length = 10)
+    private String verificationCode;
+
+    @Column(name = "is_verified", nullable = false)
+    private boolean isVerified = false;
+
     public PharmacyUser() {}
 
     public UUID getId() {
@@ -89,5 +95,21 @@ public class PharmacyUser {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getVerificationCode() {
+        return verificationCode;
+    }
+
+    public void setVerificationCode(String verificationCode) {
+        this.verificationCode = verificationCode;
+    }
+
+    public boolean isVerified() {
+        return isVerified;
+    }
+
+    public void setVerified(boolean verified) {
+        isVerified = verified;
     }
 }

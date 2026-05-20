@@ -53,8 +53,9 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        // Only ACTIVE pharmacy users may authenticate.
-        // PENDING users must wait for admin approval.
-        return user.getPharmacy().getStatus() == PharmacyStatus.ACTIVE;
+        // Allow login for ACTIVE and PENDING pharmacies.
+        // This allows newly registered/verified users to see their dashboard while waiting for admin approval.
+        PharmacyStatus status = user.getPharmacy().getStatus();
+        return status == PharmacyStatus.ACTIVE || status == PharmacyStatus.PENDING;
     }
 }

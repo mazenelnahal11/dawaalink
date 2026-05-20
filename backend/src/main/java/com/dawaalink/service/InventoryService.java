@@ -23,9 +23,13 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.math.BigDecimal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Service
 public class InventoryService {
+    private static final Logger log = LoggerFactory.getLogger(InventoryService.class);
 
     private final InventoryItemRepository inventoryRepository;
     private final MedicationReferenceRepository medicationRepository;
@@ -44,12 +48,21 @@ public class InventoryService {
 
     @Transactional
     public InventoryItemResponse addDeadStock(UUID pharmacyId, CreateInventoryItemRequest request) {
-        Pharmacy pharmacy = pharmacyRepository.findById(pharmacyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Pharmacy not found"));
+        log.info("Adding dead stock for pharmacy: {} - Medicine: {} (GTIN: {})", pharmacyId, request.getMedicineName(), request.getGtin());
+        try {
+            Pharmacy pharmacy = pharmacyRepository.findById(pharmacyId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Pharmacy not found"));
 
-        MedicationReference medRef = medicationRepository.findByTradeNameIgnoreCaseOrScientificNameIgnoreCase(
-                        request.getMedicineName(), request.getMedicineName())
-                .orElse(null);
+        MedicationReference medRef = null;
+        if (request.getGtin() != null && !request.getGtin().isEmpty()) {
+            medRef = medicationRepository.findById(request.getGtin()).orElse(null);
+        }
+
+        if (medRef == null) {
+            medRef = medicationRepository.findByTradeNameIgnoreCaseOrScientificNameIgnoreCase(
+                            request.getMedicineName(), request.getMedicineName())
+                    .orElse(null);
+        }
 
         boolean isControlled = medRef != null && Boolean.TRUE.equals(medRef.getIsControlled());
 
@@ -60,7 +73,7 @@ public class InventoryService {
             medRef.setScientificName(request.getMedicineName());
             medRef.setStorageCondition(request.getStorageCondition());
             medRef.setIsControlled(false);
-            medicationRepository.save(medRef);
+            medRef = medicationRepository.save(medRef);
         }
 
         InventoryItem item = new InventoryItem();
@@ -85,12 +98,24 @@ public class InventoryService {
             item.setLockStatus(LockStatus.ACTIVE);
         }
 
-        item = inventoryRepository.save(item);
-        return mapToResponse(item);
+            item = inventoryRepository.save(item);
+            log.info("Successfully added inventory item: {}", item.getId());
+            return mapToResponse(item);
+        } catch (Exception e) {
+            log.error("Failed to add dead stock: {}", e.getMessage(), e);
+            throw e;
+        }
     }
 
     public List<InventoryItemResponse> getPharmacyInventory(UUID pharmacyId) {
         return inventoryRepository.findByPharmacyId(pharmacyId).stream()
+                .map(this::mapToResponse)
+                .collect(Collectors.toList());
+    }
+
+    public List<InventoryItemResponse> getNearExpiryItems(UUID pharmacyId, int thresholdDays) {
+        LocalDate thresholdDate = LocalDate.now().plusDays(thresholdDays);
+        return inventoryRepository.findByPharmacyIdAndExpiryDateBefore(pharmacyId, thresholdDate).stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
     }

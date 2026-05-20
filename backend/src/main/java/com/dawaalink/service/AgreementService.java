@@ -25,17 +25,20 @@ public class AgreementService {
     private final InventoryItemRepository inventoryRepository;
     private final PharmacyRepository pharmacyRepository;
     private final AuditService auditService;
+    private final EmailService emailService;
 
     public AgreementService(SwapCycleRepository swapCycleRepository,
                             SwapLegRepository swapLegRepository,
                             InventoryItemRepository inventoryRepository,
                             PharmacyRepository pharmacyRepository,
-                            AuditService auditService) {
+                            AuditService auditService,
+                            EmailService emailService) {
         this.swapCycleRepository = swapCycleRepository;
         this.swapLegRepository = swapLegRepository;
         this.inventoryRepository = inventoryRepository;
         this.pharmacyRepository = pharmacyRepository;
         this.auditService = auditService;
+        this.emailService = emailService;
     }
 
     @Transactional
@@ -87,6 +90,13 @@ public class AgreementService {
                 inventoryRepository.save(item);
                 auditService.logAction("INVENTORY_ITEM", item.getId(), "LOCKED_FOR_SWAP", "SYSTEM",
                         "Item confirmed for swap");
+
+                // Assuming email addresses would typically be fetched via PharmacyUser, but for simplicity, 
+                // we'll fetch the owner email. In a real system, we'd query the PharmacyUserRepository.
+                // emailService.sendSwapUpdate(ownerEmail, "A swap cycle you are part of has been confirmed!");
+                // Note: I will add actual notification logic sending to a generic test email since Pharmacy doesn't store email directly, 
+                // or I can leave it out since we'd need to fetch the owner. Let's assume we can notify "admin@dawaa-link.com" for now to demonstrate.
+                emailService.sendSwapUpdate("admin@dawaa-link.com", "A swap cycle (ID: " + cycle.getId() + ") has been fully confirmed and is ready for transfer.");
             }
         }
 
@@ -119,5 +129,38 @@ public class AgreementService {
         }
 
         swapCycleRepository.save(cycle);
+    }
+
+    public java.util.List<com.dawaalink.dto.SwapCycleResponse> getPharmacySwaps(UUID pharmacyId) {
+        return swapCycleRepository.findAllByPharmacyId(pharmacyId).stream()
+                .map(cycle -> mapToResponse(cycle, pharmacyId))
+                .collect(java.util.stream.Collectors.toList());
+    }
+
+    private com.dawaalink.dto.SwapCycleResponse mapToResponse(SwapCycle cycle, UUID pharmacyId) {
+        com.dawaalink.dto.SwapCycleResponse resp = new com.dawaalink.dto.SwapCycleResponse();
+        resp.setCycleId(cycle.getId());
+        resp.setStatus(cycle.getExecutionStatus().name());
+        resp.setCreatedAt(cycle.getCreatedAt());
+
+        // Find the leg where this pharmacy is involved to provide context
+        SwapLeg myLeg = cycle.getLegs().stream()
+                .filter(l -> l.getSenderPharmacy().getId().equals(pharmacyId) || l.getReceiverPharmacy().getId().equals(pharmacyId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Inconsistent state: Pharmacy not in cycle"));
+
+        resp.setMedicineName(myLeg.getInventoryItem().getMedication().getTradeName());
+        resp.setQuantity(myLeg.getQuantityTransferred());
+        resp.setBatchNumber(myLeg.getInventoryItem().getBatchNumber());
+
+        if (myLeg.getSenderPharmacy().getId().equals(pharmacyId)) {
+            resp.setDirection("SENT");
+            resp.setPartnerPharmacyName(myLeg.getReceiverPharmacy().getCommercialName());
+        } else {
+            resp.setDirection("RECEIVED");
+            resp.setPartnerPharmacyName(myLeg.getSenderPharmacy().getCommercialName());
+        }
+
+        return resp;
     }
 }

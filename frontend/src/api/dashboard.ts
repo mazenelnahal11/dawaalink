@@ -48,3 +48,15 @@ export const getRecentHistory = async (): Promise<SwapCycle[]> => {
   const { data } = await api.get('/swaps?limit=10&sort=createdAt,desc');
   return data;
 };
+
+export const exportInventoryReport = async (format: 'csv' | 'pdf' = 'pdf') => {
+  const endpoint = format === 'pdf' ? '/reports/inventory/pdf' : '/reports/inventory';
+  const response = await api.get(endpoint, { responseType: 'blob' });
+  const url = window.URL.createObjectURL(new Blob([response.data]));
+  const link = document.createElement('a');
+  link.href = url;
+  link.setAttribute('download', `inventory_report.${format}`);
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+};

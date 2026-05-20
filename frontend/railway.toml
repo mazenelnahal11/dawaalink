@@ -1,0 +1,13 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
+
+# Required environment variables (set in Railway dashboard):
+#   BACKEND_URL — Railway private domain of backend service, e.g.:
+#                 http://${{backend.RAILWAY_PRIVATE_DOMAIN}}
+#                 (use Railway's reference syntax in the dashboard)

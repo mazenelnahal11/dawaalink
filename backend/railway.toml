@@ -1,0 +1,19 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/api/v1/auth/login"
+healthcheckTimeout = 120
+restartPolicyType = "on_failure"
+restartPolicyMaxRetries = 3
+
+# Required environment variables (set in Railway dashboard):
+#   POSTGRES_PASSWORD         — from Railway's Postgres plugin variable
+#   JWT_SECRET                — generate with: openssl rand -base64 48
+#   SPRING_DATASOURCE_URL     — set to Railway Postgres internal URL
+#   SPRING_DATASOURCE_USERNAME
+#   RESEND_API_KEY            — from resend.com
+#   APP_FRONTEND_BASE_URL     — your Railway frontend public URL (https://...)
+#   APP_ADMIN_BOOTSTRAP_EMAIL    — first admin email
+#   APP_ADMIN_BOOTSTRAP_PASSWORD — first admin password (change after first login)
